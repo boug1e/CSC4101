@@ -34,6 +34,7 @@ const tokens_types = {
     "COLON": "COLON"
 };
 
+
 export function lexer(input: string): string[] {
 
     const tokens: string[] = [];
@@ -166,21 +167,6 @@ end_if
 end_if
 end_program`);
 
-// const tokens: string[] = lexer(`
-//     program
-//     loop (i = 0 : value)
-//     value = 5 + i;
-//     if (value >= i && (value + i) < 3)
-//     j = value;
-//     if (j != value)
-//     y = j + value;
-//     end_if
-//     end_if
-//     j = j + 4;
-//     end_loop
-//     value = 5;
-//     end_program
-//     `);
 
 console.log(tokens);
 
