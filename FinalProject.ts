@@ -34,6 +34,7 @@ const tokens_types = {
     "COLON": "COLON"
 };
 
+
 export function lexer(input: string): string[] {
 
     const tokens: string[] = [];
@@ -149,38 +150,13 @@ export function lexer(input: string): string[] {
 }
 
 const tokens: string[] = lexer(`
-program 
-value = 32;
-mod1 = 45;
-//Calculating performance
-z = mod1 / (value * (value % 7) + mod1);
-loop (i = 0 : value)
-z = z + mod1;
-end_loop
-if (z >= 50 && value <= 60)
-newValue = 50 / mod1;
-x = mod1;
-if (y < 5)
-y = x + 5;
-end_if
-end_if
-end_program`);
+program
+    x = 10;
+    y = 20;
+    z = (x + y) * ((y % 3) + (x / 2));
+end_program
+`);
 
-// const tokens: string[] = lexer(`
-//     program
-//     loop (i = 0 : value)
-//     value = 5 + i;
-//     if (value >= i && (value + i) < 3)
-//     j = value;
-//     if (j != value)
-//     y = j + value;
-//     end_if
-//     end_if
-//     j = j + 4;
-//     end_loop
-//     value = 5;
-//     end_program
-//     `);
 
 console.log(tokens);
 
@@ -274,7 +250,7 @@ export function parser(): void {
         term();
         if (nextToken === tokens_types.PLUS || nextToken === tokens_types.MINUS) {
             lex();
-            term();
+            expr();
         }
         console.log("Exiting <expr>" + " " + nextToken);
     }
@@ -289,7 +265,6 @@ export function parser(): void {
                 stmts();
                 if (nextToken === tokens_types.END_IF) {
                     lex();
-                    // Continue parsing statements after the if block
                     if (nextToken !== tokens_types.END_PROGRAM && 
                         nextToken !== tokens_types.END_IF) {
                         stmts();
@@ -367,7 +342,7 @@ export function parser(): void {
         console.log("Exiting <logic_exp>" + " " + nextToken);
     }
 
-    function bin_cond() {
+    function bin_cond(): void {
         console.log("Entering <bin_cond>" + " " + nextToken);
         if (nextToken === tokens_types.AND || nextToken === tokens_types.OR) {
             lex();
