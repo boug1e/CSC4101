@@ -159,7 +159,7 @@ function lexer(input) {
                     case "==":
                         tokens.push(tokens_types["EQUAL"]);
                         break;
-                    default: throw new Error("Unexpected character: ".concat(char));
+                    default: throw new Error("Unexpected comparison: ".concat(logical));
                 }
             }
             else if (logical.length === 1) {

@@ -200,7 +200,7 @@ function lexer(input: string): string[] {
                         case "&&": tokens.push(tokens_types["AND"]); break;
                         case "||": tokens.push(tokens_types["OR"]); break;
                         case "==": tokens.push(tokens_types["EQUAL"]); break;
-                        default: throw new Error(`Unexpected character: ${char}`);
+                        default: throw new Error(`Unexpected comparison: ${logical}`);
                 }
             } else if (logical.length === 1) {
                 if (logical === ">") {
