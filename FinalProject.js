@@ -57,10 +57,11 @@ function handleInput() {
     catch (error) {
         output_text.value += error;
     }
+    ;
 }
 function displayDocumentation() {
     var output_text = document.getElementById("code-output");
-    output_text.value = "\n        --------------------------------\n                DOCUMENTATION\n        --------------------------------\n\n<program> -> program <stmts> end_program\n\n<stmts> -> {stmt}\n\n<stmt> -> <ident> = <expr>; | <condition> | \n            <loop>\n\n<condition> -> if (<logic_exp>) <stmts> end_if \n\n<logic_exp> -> <expr> (== | != | <= | \n            >= | > | <) <expr> {<bin_cond>}\n\n<bin_cond> -> (&& | ||) <logic_exp>\n\n<loop> -> loop (<loop_cond>) <stmts> end_loop\n\n<loop_cond> -> <ident> = <expr> : <expr>\n\n<expr> -> <term> {(+ | -) <term>}\n\n<term> -> <factor> {(* | / | %) <term>}\n\n<factor> -> <ident> | <lit> | (<expr>)\n\n<ident> -> char {char | <lit>}\n\n<lit> -> number\n    ";
+    output_text.value = "\n        --------------------------------\n                DOCUMENTATION\n        --------------------------------\n\n<program> -> program <stmts> end_program\n\n<stmts> -> {stmt}\n\n<stmt> -> <ident> = <expr>; | <condition> | \n            <loop>\n\n<condition> -> if (<logic_exp>) <stmts> end_if \n\n<logic_exp> -> <factor> (== | != | <= | \n            >= | > | <) <factor> {<bin_cond>}\n\n<bin_cond> -> (&& | ||) <logic_exp>\n\n<loop> -> loop (<loop_cond>) <stmts> end_loop\n\n<loop_cond> -> <ident> = <factor> : <factor>\n\n<expr> -> <term> {(+ | -) <expr>}\n\n<term> -> <factor> {(* | / | %) <term>}\n\n<factor> -> <ident> | <lit> | (<expr>)\n\n<ident> -> char {char | <lit>}\n\n<lit> -> number\n    ";
 }
 function cleanOutput() {
     var output_text = document.getElementById("code-output");
@@ -85,7 +86,7 @@ function lexer(input) {
         }
         if (isLetter(char)) {
             var ident = "";
-            while (i < input.length && isLetter(char) || isDigit(char)) {
+            while (i < input.length && (isLetter(char) || isDigit(char))) {
                 ident += char;
                 i++;
                 if (i < input.length) {
@@ -113,7 +114,7 @@ function lexer(input) {
             else {
                 tokens.push(tokens_types["IDENT"]);
             }
-            // console.log(ident);
+            console.log(ident);
             continue;
         }
         if (isDigit(char)) {
@@ -125,7 +126,7 @@ function lexer(input) {
                     char = input[i];
                 }
             }
-            // console.log(number);
+            console.log(number);
             tokens.push(tokens_types["INT_LIT"]);
             continue;
         }
@@ -175,7 +176,7 @@ function lexer(input) {
             else {
                 throw new Error("Unexpected character: ".concat(char));
             }
-            // console.log(logical);
+            console.log(logical);
             continue;
         }
         switch (char) {
@@ -204,7 +205,8 @@ function lexer(input) {
                 tokens.push(tokens_types["COLON"]);
                 break;
             case "/":
-                if (input[i + 1] === "/") {
+                if (i + 1 < input.length && input[i + 1] === "/") {
+                    i += 2;
                     while (i < input.length && input[i] !== "\n") {
                         i++;
                     }
@@ -212,10 +214,11 @@ function lexer(input) {
                 else {
                     tokens.push(tokens_types["DIV"]);
                 }
-                continue;
+                break;
             default: throw new Error("Unexpected character: ".concat(char));
         }
         i++;
+        console.log(tokens);
     }
     return tokens;
 }
@@ -250,12 +253,6 @@ function parser() {
     function stmts() {
         output += "Enter <stmts>\n";
         console.log("Enter <stmts> " + nextToken);
-        // stmt();
-        // if (nextToken !== tokens_types["END_PROGRAM"]) {
-        //     stmts();
-        // } else {
-        //     throw new Error ("Missing semicolon ';' after statement.");
-        // }
         while (nextToken === tokens_types["IF"] || nextToken === tokens_types["LOOP"] || nextToken === tokens_types["IDENT"]) {
             stmt();
         }
@@ -356,10 +353,10 @@ function parser() {
         variable();
         if (nextToken === tokens_types["ASSIGN"]) {
             lex();
-            expr();
+            factor();
             if (nextToken === tokens_types["COLON"]) {
                 lex();
-                expr();
+                factor();
             }
             else {
                 throw new Error("Expected ':' for end of loop condition.");
@@ -374,11 +371,11 @@ function parser() {
     function logic_expr() {
         output += "Entering <logic_exp>\n";
         console.log("Entering <logic_exp> " + nextToken);
-        expr();
+        factor();
         if (nextToken === tokens_types["EQUAL"] || nextToken === tokens_types["NOT_EQUAL"] || nextToken === tokens_types["GREATER_EQUAL"] || nextToken === tokens_types["LESS_EQUAL"]
             || nextToken === tokens_types["GREATER"] || nextToken === tokens_types["LESS"]) {
             lex();
-            expr();
+            factor();
             if (nextToken !== tokens_types["RPAREN"]) {
                 bin_cond();
             }

@@ -15,7 +15,7 @@ body {
     grid-template-rows: auto 1fr;
     margin: 0 auto;
     max-width: 1200px;
-    max-height: 900px;
+    max-height: 700px;
     height: 100vh;
     padding: 1rem;
 }
@@ -24,7 +24,7 @@ body {
     grid-column: 1 / 2;
     grid-row: 1 / 2;
     color: #fff;
-    font-size: 2rem;
+    font-size: 1.5rem;
     font-weight: bold;
     padding-left: 1rem;
     padding-right: 1rem;

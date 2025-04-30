@@ -63,7 +63,7 @@ function handleInput(): void {
         }
     } catch (error) {
         output_text.value += error;
-    }
+    };
 
 }
 
@@ -83,16 +83,16 @@ function displayDocumentation(): void {
 
 <condition> -> if (<logic_exp>) <stmts> end_if 
 
-<logic_exp> -> <expr> (== | != | <= | 
-            >= | > | <) <expr> {<bin_cond>}
+<logic_exp> -> <factor> (== | != | <= | 
+            >= | > | <) <factor> {<bin_cond>}
 
 <bin_cond> -> (&& | ||) <logic_exp>
 
 <loop> -> loop (<loop_cond>) <stmts> end_loop
 
-<loop_cond> -> <ident> = <expr> : <expr>
+<loop_cond> -> <ident> = <factor> : <factor>
 
-<expr> -> <term> {(+ | -) <term>}
+<expr> -> <term> {(+ | -) <expr>}
 
 <term> -> <factor> {(* | / | %) <term>}
 
@@ -143,7 +143,7 @@ function lexer(input: string): string[] {
         }
         if (isLetter(char)) {
             let ident : string = "";
-            while (i < input.length && isLetter(char) || isDigit(char)) {
+            while (i < input.length && (isLetter(char) || isDigit(char))) {
                 ident += char;
                 i++;
                 if (i < input.length) {
@@ -165,7 +165,7 @@ function lexer(input: string): string[] {
             } else {
                 tokens.push(tokens_types["IDENT"]);
             }  
-            // console.log(ident);
+            console.log(ident);
             continue;
         }
 
@@ -178,7 +178,7 @@ function lexer(input: string): string[] {
                     char = input[i];
                 }
             }
-            // console.log(number);
+            console.log(number);
             tokens.push(tokens_types["INT_LIT"]);
             continue;
         }
@@ -213,7 +213,7 @@ function lexer(input: string): string[] {
             } else {
                 throw new Error(`Unexpected character: ${char}`);
             }
-            // console.log(logical);
+            console.log(logical);
             continue;
         }
 
@@ -227,18 +227,20 @@ function lexer(input: string): string[] {
             case "%": tokens.push(tokens_types["MOD"]); break;
             case ":": tokens.push(tokens_types["COLON"]); break;
             case "/": 
-                if (input[i+1] === "/") {
+                if (i + 1 < input.length && input[i+1] === "/") {
+                    i += 2;
                     while (i < input.length && input[i] !== "\n") {
                         i++;
                     }
                 } else {
                     tokens.push(tokens_types["DIV"]);
                 }
-                continue;
+                break;
             default: throw new Error(`Unexpected character: ${char}`);
         }
 
         i++;
+        console.log(tokens);
     }
     return tokens;
 }
@@ -274,12 +276,7 @@ function parser(): string {
     function stmts(): void {
         output += "Enter <stmts>\n";
         console.log("Enter <stmts> " + nextToken);
-        // stmt();
-        // if (nextToken !== tokens_types["END_PROGRAM"]) {
-        //     stmts();
-        // } else {
-        //     throw new Error ("Missing semicolon ';' after statement.");
-        // }
+
         while (nextToken === tokens_types["IF"] || nextToken === tokens_types["LOOP"] || nextToken === tokens_types["IDENT"]) {
             stmt();
         }
@@ -375,10 +372,10 @@ function parser(): string {
         variable();
         if (nextToken === tokens_types["ASSIGN"]) {
             lex();
-            expr();
+            factor();
             if (nextToken === tokens_types["COLON"]) {
                 lex();
-                expr();
+                factor();
             } else {
                 throw new Error ("Expected ':' for end of loop condition.");
             }
@@ -392,11 +389,11 @@ function parser(): string {
     function logic_expr(): void {
         output += "Entering <logic_exp>\n";
         console.log("Entering <logic_exp> " + nextToken);
-        expr();
+        factor();
         if (nextToken === tokens_types["EQUAL"] || nextToken === tokens_types["NOT_EQUAL"] || nextToken === tokens_types["GREATER_EQUAL"] || nextToken === tokens_types["LESS_EQUAL"]
             || nextToken === tokens_types["GREATER"] || nextToken === tokens_types["LESS"]) {
             lex();
-            expr();
+            factor();
             if (nextToken !== tokens_types["RPAREN"]) {
                 bin_cond();
             }
