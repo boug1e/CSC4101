@@ -1,4 +1,8 @@
-const tokens_types = {
+var tokens: string[] = [];
+var token_index: number = 0;
+var nextToken: string;
+
+const tokens_types: Record<string, string> = {
     "PROGRAM": "PROGRAM",
     "END_PROGRAM": "END_PROGRAM",
     "STMTS": "STMTS",
@@ -34,8 +38,96 @@ const tokens_types = {
     "COLON": "COLON"
 };
 
+/* ---------------------button stuff---------------------------- */
+function handleInput(): void {
+    const input_text: HTMLTextAreaElement = document.getElementById("code-input") as HTMLTextAreaElement;
+    const output_text: HTMLTextAreaElement = document.getElementById("code-output") as HTMLTextAreaElement;
 
-export function lexer(input: string): string[] {
+    output_text.value = "";
+    token_index = 0;
+
+    try {
+        tokens = lexer(input_text.value);
+        console.clear();
+        console.log(tokens);
+        try {
+            output_text.value = parser();
+    
+            output_text.value += `
+            --------------------------------
+                Code Compiled Successfully
+            --------------------------------
+            `;
+        } catch (error) {
+            output_text.value += error;
+        }
+    } catch (error) {
+        output_text.value += error;
+    }
+
+}
+
+function displayDocumentation(): void {
+    const output_text: HTMLTextAreaElement = document.getElementById("code-output") as HTMLTextAreaElement;
+    output_text.value = `
+        --------------------------------
+                DOCUMENTATION
+        --------------------------------
+
+<program> -> program <stmts> end_program
+
+<stmts> -> {stmt}
+
+<stmt> -> <ident> = <expr>; | <condition> | 
+            <loop>
+
+<condition> -> if (<logic_exp>) <stmts> end_if 
+
+<logic_exp> -> <expr> (== | != | <= | 
+            >= | > | <) <expr> {<bin_cond>}
+
+<bin_cond> -> (&& | ||) <logic_exp>
+
+<loop> -> loop (<loop_cond>) <stmts> end_loop
+
+<loop_cond> -> <ident> = <expr> : <expr>
+
+<expr> -> <term> {(+ | -) <term>}
+
+<term> -> <factor> {(* | / | %) <term>}
+
+<factor> -> <ident> | <lit> | (<expr>)
+
+<ident> -> char {char | <lit>}
+
+<lit> -> number
+    `;
+}
+
+function cleanOutput(): void {
+    const output_text: HTMLTextAreaElement = document.getElementById("code-output") as HTMLTextAreaElement;
+    output_text.value = "";
+}
+
+function displayAbout(): void {
+    const output_text: HTMLTextAreaElement = document.getElementById("code-output") as HTMLTextAreaElement;
+    output_text.value = `
+        --------------------------------
+                    ABOUT
+        --------------------------------
+
+This program is a basic recursive descent parser written in TypeScript for CSC4101 at 
+Louisiana State University. Refer to the documentation to view the EBNF grammar to see
+how to use the parser. 
+
+Github: https://github.com/boug1e
+-Mason
+
+    `;
+}
+/* ------------------------------------------------------------ */
+
+function lexer(input: string): string[] {
 
     const tokens: string[] = [];
     const isLetter = (char: string): boolean => /[a-zA-Z_]/.test(char);
@@ -59,19 +151,19 @@ export function lexer(input: string): string[] {
                 }
             }
             if (ident === "program") {
-                tokens.push(tokens_types.PROGRAM);
+                tokens.push(tokens_types["PROGRAM"]);
             } else if (ident === "end_program") {
-                tokens.push(tokens_types.END_PROGRAM);
+                tokens.push(tokens_types["END_PROGRAM"]);
             } else if (ident === "if") {
-                tokens.push(tokens_types.IF);
+                tokens.push(tokens_types["IF"]);
             } else if (ident === "end_if") {
-                tokens.push(tokens_types.END_IF);
+                tokens.push(tokens_types["END_IF"]);
             } else if (ident === "loop") {
-                tokens.push(tokens_types.LOOP);
+                tokens.push(tokens_types["LOOP"]);
             } else if (ident === "end_loop") {
-                tokens.push(tokens_types.END_LOOP);
+                tokens.push(tokens_types["END_LOOP"]);
             } else {
-                tokens.push(tokens_types.IDENT);
+                tokens.push(tokens_types["IDENT"]);
             }  
             // console.log(ident);
             continue;
@@ -87,7 +179,7 @@ export function lexer(input: string): string[] {
                 }
             }
             // console.log(number);
-            tokens.push(tokens_types.INT_LIT);
+            tokens.push(tokens_types["INT_LIT"]);
             continue;
         }
 
@@ -96,206 +188,174 @@ export function lexer(input: string): string[] {
             while (i < input.length && isLogical(char)) {
                 logical += char;
                 i++;
-                if (i < input.length)
-                    if (logical.length > 1) {
-                        switch (logical) {
-                            case ">=": tokens.push(tokens_types.GREATER_EQUAL); break;
-                            case "<=": tokens.push(tokens_types.LESS_EQUAL); break;
-                            case "!=": tokens.push(tokens_types.NOT_EQUAL); break;
-                            case "&&": tokens.push(tokens_types.AND); break;
-                            case "||": tokens.push(tokens_types.OR); break;
-                            case "==": tokens.push(tokens_types.EQUAL); break;
-                            default: throw new Error(`Unexpected character: ${char}`);
-                        }
-                    }
+                if (i < input.length) {
                     char = input[i];
                 }
-                if (logical.length === 1) {
-                    if (logical === ">") {
-                        tokens.push(tokens_types.GREATER);
-                    } else if (logical === "<") {
-                        tokens.push(tokens_types.LESS);
-                    } else if (logical === "=") {
-                        tokens.push(tokens_types.ASSIGN);
-                    }
+            }
+            if (logical.length > 1) {
+                switch (logical) {
+                        case ">=": tokens.push(tokens_types["GREATER_EQUAL"]); break;
+                        case "<=": tokens.push(tokens_types["LESS_EQUAL"]); break;
+                        case "!=": tokens.push(tokens_types["NOT_EQUAL"]); break;
+                        case "&&": tokens.push(tokens_types["AND"]); break;
+                        case "||": tokens.push(tokens_types["OR"]); break;
+                        case "==": tokens.push(tokens_types["EQUAL"]); break;
+                        default: throw new Error(`Unexpected character: ${char}`);
                 }
+            } else if (logical.length === 1) {
+                if (logical === ">") {
+                    tokens.push(tokens_types["GREATER"]);
+                } else if (logical === "<") {
+                    tokens.push(tokens_types["LESS"]);
+                } else if (logical === "=") {
+                    tokens.push(tokens_types["ASSIGN"]);
+                }
+            } else {
+                throw new Error(`Unexpected character: ${char}`);
+            }
             // console.log(logical);
             continue;
         }
 
         switch (char) {
-            case "(": tokens.push(tokens_types.LPAREN); break;
-            case ")": tokens.push(tokens_types.RPAREN); break;
-            case ";": tokens.push(tokens_types.SEMICOLON); break;
-            case "+": tokens.push(tokens_types.PLUS); break;
-            case "-": tokens.push(tokens_types.MINUS); break;
-            case "*": tokens.push(tokens_types.MULT); break;
-            case "%": tokens.push(tokens_types.MOD); break;
-            case ":": tokens.push(tokens_types.COLON); break;
+            case "(": tokens.push(tokens_types["LPAREN"]); break;
+            case ")": tokens.push(tokens_types["RPAREN"]); break;
+            case ";": tokens.push(tokens_types["SEMICOLON"]); break;
+            case "+": tokens.push(tokens_types["PLUS"]); break;
+            case "-": tokens.push(tokens_types["MINUS"]); break;
+            case "*": tokens.push(tokens_types["MULT"]); break;
+            case "%": tokens.push(tokens_types["MOD"]); break;
+            case ":": tokens.push(tokens_types["COLON"]); break;
             case "/": 
                 if (input[i+1] === "/") {
                     while (i < input.length && input[i] !== "\n") {
                         i++;
                     }
                 } else {
-                    tokens.push(tokens_types.DIV);
+                    tokens.push(tokens_types["DIV"]);
                 }
-                break;
+                continue;
             default: throw new Error(`Unexpected character: ${char}`);
         }
-        // console.log(char);
+
         i++;
     }
     return tokens;
 }
 
-const tokens: string[] = lexer(`
-program
-    x = 10;
-    y = 20;
-    z = (x + y) * ((y % 3) + (x / 2));
-end_program
-`);
-
-
-console.log(tokens);
-
-var token_index: number = 0;
-var nextToken: string;
-export function lex(): string {
+function lex(): string {
     token_index++;
     nextToken = tokens[token_index];
     return nextToken;
 }
 
-export function parser(): void {
+function parser(): string {
+    var output = "";
     nextToken = tokens[0];
     program();
     function program(): void {
-        console.log("Enter <program>" + " " + nextToken);
-        if (nextToken === tokens_types.PROGRAM) {
+        output += "Enter <program>\n";
+        console.log("Enter <program> " + nextToken);
+        if (nextToken === tokens_types["PROGRAM"]) {
             lex();
             stmts();
-            if (nextToken === tokens_types.END_PROGRAM) {
+            if (nextToken === tokens_types["END_PROGRAM"]) {
                 lex();
             } else {
-                throw new Error ("Program must end with end_program");
+                throw new Error ("Program must end with 'end_program'.");
             }
         } else {
-            throw new Error ("Program must begin with program");
+            throw new Error ("Program must begin with 'program'.");
         } 
-        console.log("Exit <program>" + " " + nextToken);
+        output += "Exit <program>\n";
+        console.log("Exit <program> " + nextToken);
     }
 
     function stmts(): void {
-        console.log("Enter <stmts>" + " " + nextToken);
-        stmt();
-        if (nextToken === tokens_types.SEMICOLON) {
-            lex();
-            if (nextToken !== tokens_types.END_PROGRAM) {
-                stmts();
-            }
-        } else if (nextToken === tokens_types.END_IF || nextToken === tokens_types.END_LOOP) {
-            // Don't consume END_IF or END_LOOP - let condition() and loop() handle these
-            console.log("Exit <stmts>" + " " + nextToken);
-            return;
-        } else if (nextToken === tokens_types.END_PROGRAM) {
-            // Don't consume END_PROGRAM - let program() handle it
-            console.log("Exit <stmts>" + " " + nextToken);
-            return;
-        } else {
-            throw new Error ("Missing semicolon ';' after statement.");
+        output += "Enter <stmts>\n";
+        console.log("Enter <stmts> " + nextToken);
+        // stmt();
+        // if (nextToken !== tokens_types["END_PROGRAM"]) {
+        //     stmts();
+        // } else {
+        //     throw new Error ("Missing semicolon ';' after statement.");
+        // }
+        while (nextToken === tokens_types["IF"] || nextToken === tokens_types["LOOP"] || nextToken === tokens_types["IDENT"]) {
+            stmt();
         }
-        console.log("Exit <stmts>" + " " + nextToken);
+
+        if (nextToken === tokens_types["INT_LIT"]) {
+            throw new Error ("Statements must start with an 'identifier', 'if', or 'loop'.");
+        }
+
+        output += "Exit <stmts>\n";
+        console.log("Exit <stmts> " + nextToken);
     }
 
     function stmt(): void { 
-        console.log("Enter <stmt>" + " " + nextToken);
-        if (nextToken === tokens_types.END_IF || nextToken === tokens_types.END_LOOP || nextToken === tokens_types.END_PROGRAM) {
-            // Don't process END_IF, END_LOOP, or END_PROGRAM as regular statements
-            console.log("Exiting <stmt>" + " " + nextToken);
-            return;
-        } else if (nextToken === tokens_types.IF) {
+        output += "Enter <stmt>\n";
+        console.log("Enter <stmt> " + nextToken);
+        if (nextToken === tokens_types["IF"]) {
             lex();
             condition();
-        } else if (nextToken === tokens_types.LOOP) {
+        } else if (nextToken === tokens_types["LOOP"]) {
             lex();
             loop();
-        } else if (nextToken === tokens_types.IDENT) {    
+        } else if (nextToken === tokens_types["IDENT"]) {    
             variable();
-            if (nextToken === tokens_types.ASSIGN) {
+            if (nextToken === tokens_types["ASSIGN"]) {
                 lex();
                 expr();
+                if (nextToken === tokens_types["SEMICOLON"]) {
+                    lex();
+                } else {
+                    throw new Error ("Expected semicolon ';' after assignment.");
+                }
             } else {
                 throw new Error ("Expected assign declaration '='.");
             }
         } else {
-            throw new Error("Unexpected token: " + nextToken);
+            throw new Error("Unexpected token: '" + nextToken + "'.");
         }
-        console.log("Exiting <stmt>" + " " + nextToken);
-    }
-
-    function variable(): void {
-        console.log("Enter <var>" + " " + nextToken);
-        if (nextToken === tokens_types.IDENT) {
-            lex();  
-        } else {
-            throw new Error ("Expected identifier in assignment");
-        }
-        console.log("Exiting <var>" + " " + nextToken);
-    }
-
-    function expr(): void {
-        console.log("Entering <expr>" + " " + nextToken);
-        term();
-        if (nextToken === tokens_types.PLUS || nextToken === tokens_types.MINUS) {
-            lex();
-            expr();
-        }
-        console.log("Exiting <expr>" + " " + nextToken);
+        output += "Exiting <stmt>\n";
+        console.log("Exiting <stmt> " + nextToken);
     }
 
     function condition(): void {
-        console.log("Entering <condition>" + " " + nextToken);
-        if (nextToken === tokens_types.LPAREN) {
+        output += "Entering <condition>\n";
+        console.log("Entering <condition> " + nextToken);
+        if (nextToken === tokens_types["LPAREN"]) {
             lex();
             logic_expr();
-            if (nextToken === tokens_types.RPAREN) {
+            if (nextToken === tokens_types["RPAREN"]) {
                 lex();
                 stmts();
-                if (nextToken === tokens_types.END_IF) {
+                if (nextToken === tokens_types["END_IF"]) {
                     lex();
-                    if (nextToken !== tokens_types.END_PROGRAM && 
-                        nextToken !== tokens_types.END_IF) {
-                        stmts();
-                    }
                 } else {
-                    throw new Error ("Expected 'END_IF' to end condition.");
+                    throw new Error ("Expected 'END_IF' to end if condition.");
                 }
             } else {
-                throw new Error ("Expected ')' after condition.");
+                throw new Error ("Expected ')' after if condition.");
             }
         } else {
-            throw new Error ("Expected '(' before condition.");
+            throw new Error ("Expected '(' before if condition.");
         }
-        console.log("Exiting <condition>" + " " + nextToken);
+        output += "Exiting <condition>\n";
+        console.log("Exiting <condition> " + nextToken);
     }
 
     function loop(): void {
-        console.log("Entering <loop>" + " " + nextToken);
-        if (nextToken === tokens_types.LPAREN) {
+        output += "Entering <loop>\n";
+        console.log("Entering <loop> " + nextToken);
+        if (nextToken === tokens_types["LPAREN"]) {
             lex();
             loop_cond();
-            if (nextToken === tokens_types.RPAREN) {
+            if (nextToken === tokens_types["RPAREN"]) {
                 lex();
                 stmts();
-                if (nextToken === tokens_types.END_LOOP) {
+                if (nextToken === tokens_types["END_LOOP"]) {
                     lex();
-                    // Continue parsing statements after the loop
-                    if (nextToken !== tokens_types.END_PROGRAM && 
-                        nextToken !== tokens_types.END_IF) {
-                        stmts();
-                    }
                 } else {
                     throw new Error ("Expected 'END_LOOP' to end loop.");
                 }
@@ -303,96 +363,132 @@ export function parser(): void {
                 throw new Error ("Expected ')' to close loop condition.");
             }
         } else {
-            Error ("Expected '(' to open loop condition");
+            throw new Error ("Expected '(' to open loop condition.");
         }
-        console.log("Exiting <loop>" + " " + nextToken);
+        output += "Exiting <loop>\n";
+        console.log("Exiting <loop> " + nextToken);
     }
 
     function loop_cond(): void {
-        console.log("Entering <loop_cond>" + " " + nextToken);
+        output += "Entering <loop_cond>\n";
+        console.log("Entering <loop_cond> " + nextToken);
         variable();
-        if (nextToken === tokens_types.ASSIGN) {
+        if (nextToken === tokens_types["ASSIGN"]) {
             lex();
-            term();
-            if (nextToken === tokens_types.COLON) {
+            expr();
+            if (nextToken === tokens_types["COLON"]) {
                 lex();
-                term();
+                expr();
             } else {
-                throw new Error ("Expected ':' for end condition.");
+                throw new Error ("Expected ':' for end of loop condition.");
             }
         } else {
-            throw new Error ("Expected assign operation '='.");
+            throw new Error ("Expected assign operation '=' within loop condition.");
         }
-        console.log("Exiting <loop_cond>" + " " + nextToken);
+        output += "Exiting <loop_cond>\n";
+        console.log("Exiting <loop_cond> " + nextToken);
     }
 
     function logic_expr(): void {
-        console.log("Entering <logic_exp>" + " " + nextToken);
-        term();
-        if (nextToken === tokens_types.EQUAL || nextToken === tokens_types.NOT_EQUAL || nextToken === tokens_types.GREATER_EQUAL || nextToken === tokens_types.LESS_EQUAL
-            || nextToken === tokens_types.GREATER || nextToken === tokens_types.LESS) {
+        output += "Entering <logic_exp>\n";
+        console.log("Entering <logic_exp> " + nextToken);
+        expr();
+        if (nextToken === tokens_types["EQUAL"] || nextToken === tokens_types["NOT_EQUAL"] || nextToken === tokens_types["GREATER_EQUAL"] || nextToken === tokens_types["LESS_EQUAL"]
+            || nextToken === tokens_types["GREATER"] || nextToken === tokens_types["LESS"]) {
             lex();
-            term();
-            if (nextToken !== tokens_types.RPAREN) {
+            expr();
+            if (nextToken !== tokens_types["RPAREN"]) {
                 bin_cond();
             }
         } else {
-            throw new Error ("Expected conditional statement.");
+            throw new Error ("Expected logical expression. Ex: 'x > y'.");
         }
-        console.log("Exiting <logic_exp>" + " " + nextToken);
+        output += "Exiting <logic_exp>\n";
+        console.log("Exiting <logic_exp> " + nextToken);
     }
 
     function bin_cond(): void {
-        console.log("Entering <bin_cond>" + " " + nextToken);
-        if (nextToken === tokens_types.AND || nextToken === tokens_types.OR) {
+        output += "Entering <bin_cond>\n";
+        console.log("Entering <bin_cond> " + nextToken);
+        if (nextToken === tokens_types["AND"] || nextToken === tokens_types["OR"]) {
             lex();
             logic_expr();
         } else {
-            throw new Error ("Expected binary expression '&& or ||'.");
+            throw new Error ("Expected binary expression '&& or ||' or closing parenthesis ')'.");
         }
-        console.log("Exiting <bin_cond>" + " " + nextToken);
+        output += "Exiting <bin_cond>\n";
+        console.log("Exiting <bin_cond> " + nextToken);
+    }
+
+    function expr(): void {
+        output += "Entering <expr>\n";
+        console.log("Entering <expr> " + nextToken);
+        term();
+        if (nextToken === tokens_types["PLUS"] || nextToken === tokens_types["MINUS"]) {
+            lex();
+            expr();
+        }
+        output += "Exiting <expr>\n";
+        console.log("Exiting <expr> " + nextToken);
     }
 
     function term(): void {
-        console.log("Entering <term>" + " " + nextToken);
+        output += "Entering <term>\n";
+        console.log("Entering <term> " + nextToken);
         factor();
-        if (nextToken === tokens_types.MULT || nextToken === tokens_types.DIV || nextToken === tokens_types.MOD) {
+        if (nextToken === tokens_types["MULT"] || nextToken === tokens_types["DIV"] || nextToken === tokens_types["MOD"]) {
             lex();
             term();
         }
-        console.log("Exiting <term>" + " " + nextToken);
+        output += "Exiting <term>\n";
+        console.log("Exiting <term> " + nextToken);
     }
 
     function factor(): void {
-        console.log("Entering <factor>" + " " + nextToken);
-        if (nextToken === tokens_types.IDENT) {
+        output += "Entering <factor>\n";
+        console.log("Entering <factor> " + nextToken);
+        if (nextToken === tokens_types["IDENT"]) {
             variable();
-        } else if (nextToken === tokens_types.INT_LIT) {
+        } else if (nextToken === tokens_types["INT_LIT"]) {
             lit();
-        } else if (nextToken === tokens_types.LPAREN) {
+        } else if (nextToken === tokens_types["LPAREN"]) {
             lex();
             expr();
-            if (nextToken === tokens_types.RPAREN) {
+            if (nextToken === tokens_types["RPAREN"]) {
                 lex();
             } else {
-                throw new Error ("Expected ending parenthesis ')'.");
+                throw new Error ("Expected ending parenthesis ')' to expression.");
             }
         } else {
-            throw new Error ("Expected variable | integer | (expr).");
+            throw new Error ("Expected a variable | integer | (expr).");
         }
-        console.log("Exiting <factor>" + " " + nextToken);
+        output += "Exiting <factor>\n";
+        console.log("Exiting <factor> " + nextToken);
+    }
+
+    function variable(): void {
+        output += "Enter <var>\n";
+        console.log("Enter <var> " + nextToken);
+        if (nextToken === tokens_types["IDENT"]) {
+            lex();  
+        } else {
+            throw new Error ("Expected identifier in assignment '='.");
+        }
+        output += "Exiting <var>\n";
+        console.log("Exiting <var> " + nextToken);
     }
 
     function lit(): void {
-        console.log("Entering <int_lit>" + " " + nextToken);
-        if (nextToken === tokens_types.INT_LIT) {
+        output += "Entering <int_lit>\n";
+        console.log("Entering <int_lit> " + nextToken);
+        if (nextToken === tokens_types["INT_LIT"]) {
             lex();
         } else {
             throw new Error ("Expected a literal integer.");
         }
-        console.log("Exiting <int_lit>" + " " + nextToken);
+        output += "Exiting <int_lit>\n";
+        console.log("Exiting <int_lit> " + nextToken);
     }
 
+    return output;
 }
-
-parser();

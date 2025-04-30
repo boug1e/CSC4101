@@ -88,6 +88,7 @@ body {
 textarea {
     background-color: hsla(0, 0%, 12%);
     color: hsl(0, 0%, 80%);
+    font-family: 'Monospace', Courier, monospace;
     border: 1px solid hsla(0, 0%, 24%);
     border-radius: 1rem;
     font-size: 1.2rem;
